@@ -1,9 +1,9 @@
 import Matrix.Direction.*
-import Matrix.{Direction, Elem}
+import Matrix.{Direction, Element}
 
 import scala.annotation.tailrec
 
-class Matrix[A](elements: Array[Array[Elem[A]]]) extends Iterable[Elem[A]] with MatrixOps[A] {
+class Matrix[A, Elem[AA] <: Element[AA]](elements: Array[Array[Elem[A]]]) extends Iterable[Elem[A]] {
   def elemAt(row: Int, col: Int): Option[Elem[A]] = {
     elements.lift(row).flatMap(_.lift(col))
   }
@@ -31,41 +31,13 @@ class Matrix[A](elements: Array[Array[Elem[A]]]) extends Iterable[Elem[A]] with 
       _currentRow
     }
   }
-}
-
-object Matrix {
-  def apply[A](source: Array[Array[A]]): Matrix[A] = {
-    new Matrix(
-      source.zipWithIndex.map((rowValues, row) => rowValues.zipWithIndex.map((value, col) => Elem[A](value, row, col)))
-    )
-  }
-
-  case class Elem[A](value: A, row: Int, col: Int) {
-    override def toString: String = value.toString
-    def info: String = s"$value ($row, $col)"
-  }
-
-  enum Direction(val step: (Int, Int) => (Int, Int)) {
-    case UpLeft extends Direction((r, c) => (r - 1, c - 1))
-    case Up extends Direction((r, c) => (r - 1, c))
-    case UpRight extends Direction((r, c) => (r - 1, c + 1))
-    case Left extends Direction((r, c) => (r, c - 1))
-    case Right extends Direction((r, c) => (r, c + 1))
-    case DownLeft extends Direction((r, c) => (r + 1, c - 1))
-    case Down extends Direction((r, c) => (r + 1, c))
-    case DownRight extends Direction((r, c) => (r + 1, c + 1))
-  }
-}
-
-trait MatrixOps[A] {
-  self: Matrix[A] =>
 
   def nextElem(el: Elem[A], direction: Direction): Option[Elem[A]] = {
-    self.elemAt.tupled(direction.step(el.row, el.col))
+    elemAt.tupled(direction.step(el.row, el.col))
   }
 
   def elementsAt(row: Int, col: Int, direction: Direction, n: Int): Option[List[Elem[A]]] = {
-    self.elemAt(row, col).flatMap(el => elementsAt(el, direction, n))
+    elemAt(row, col).flatMap(el => elementsAt(el, direction, n))
   }
 
   def elementsAt(el: Elem[A], direction: Direction, n: Int): Option[List[Elem[A]]] = {
@@ -88,5 +60,47 @@ trait MatrixOps[A] {
     } else {
       Some(acc)
     }
+  }
+}
+
+object Matrix {
+  def apply[A](source: Array[Array[A]]): Matrix[A, Element] = {
+    custom[A, Element](source)((_value, _row, _col) => {
+      new Element[A] {
+        override val value: A = _value
+        override val row: Int = _row
+        override val col: Int = _col
+      }
+    })
+  }
+
+  def custom[A, Elem[AA] <: Element[AA]](
+      source: Array[Array[A]]
+  )(elemBuilder: (A, Int, Int) => Elem[A]): Matrix[A, Elem] = {
+    new Matrix[A, Elem](
+      source.zipWithIndex.map((rowValues, row) =>
+        rowValues.zipWithIndex.map((value, col) => elemBuilder(value, row, col))
+      )
+    )
+  }
+
+  trait Element[A] {
+    def value: A
+    def row: Int
+    def col: Int
+
+    override def toString: String = value.toString
+    def info: String = s"$value ($row, $col)"
+  }
+
+  enum Direction(val step: (Int, Int) => (Int, Int)) {
+    case UpLeft extends Direction((r, c) => (r - 1, c - 1))
+    case Up extends Direction((r, c) => (r - 1, c))
+    case UpRight extends Direction((r, c) => (r - 1, c + 1))
+    case Left extends Direction((r, c) => (r, c - 1))
+    case Right extends Direction((r, c) => (r, c + 1))
+    case DownLeft extends Direction((r, c) => (r + 1, c - 1))
+    case Down extends Direction((r, c) => (r + 1, c))
+    case DownRight extends Direction((r, c) => (r + 1, c + 1))
   }
 }

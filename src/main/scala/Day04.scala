@@ -1,10 +1,11 @@
 import Matrix.Direction.*
-import Matrix.{Direction, Elem}
+import Matrix.{Direction, Element}
 import Util.readFile
 
 @main def day04(): Unit = {
 
-  given puzzle: Matrix[Char] = Matrix(readFile("resources/day04").map(_.toCharArray).toArray)
+  type Puzzle = Matrix[Char, Element]
+  given puzzle: Puzzle = Matrix(readFile("resources/day04").map(_.toCharArray).toArray)
 
   // Part 1
 
@@ -20,13 +21,13 @@ import Util.readFile
   println(result2)
 }
 
-def wordsAt(elem: Elem[Char])(using puzzle: Matrix[Char]): List[String] = {
+def wordsAt(elem: Element[Char])(using puzzle: Matrix[Char, Element]): List[String] = {
   List(Down, Right, DownLeft, DownRight).flatMap { direction =>
     puzzle.elementsAt(elem, direction, "XMAS".length).map(_.mkString)
   }
 }
 
-def isCrossXmas(el: Elem[Char])(using puzzle: Matrix[Char]): Boolean = {
+def isCrossXmas(el: Element[Char])(using puzzle: Matrix[Char, Element]): Boolean = {
   (for {
     upLeft <- puzzle.nextElem(el, UpLeft)
     upRight <- puzzle.nextElem(el, UpRight)
