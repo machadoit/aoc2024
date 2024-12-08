@@ -1,83 +1,41 @@
-import Util.{foldWhile, readFile}
-import Direction.*
+import Matrix.Direction.*
+import Matrix.{Direction, Elem}
+import Util.readFile
 
 @main def day04(): Unit = {
 
-  given puzzle: Puzzle = Puzzle(readFile("resources/day04").map(_.toCharArray).toArray)
+  given puzzle: Matrix[Char] = Matrix(readFile("resources/day04").map(_.toCharArray).toArray)
 
   // Part 1
 
-  val words = (for {
-    row <- puzzle.rowIndices
-    col <- puzzle.colIndices
-  } yield wordsAt(row, col)).flatten
-
+  val words = puzzle.flatMap(el => wordsAt(el))
   val result1 = words.count(isXmas)
 
   println(result1)
 
   // Part 2
 
-  val crosses = for {
-    row <- puzzle.rowIndices
-    col <- puzzle.colIndices
-  } yield {
-    isCrossXmas(row, col)
-  }
-  val result2 = crosses.count(identity)
+  val result2 = puzzle.count(el => isCrossXmas(el))
 
   println(result2)
 }
 
-def wordsAt(row: Int, col: Int)(using puzzle: Puzzle): List[String] = {
+def wordsAt(elem: Elem[Char])(using puzzle: Matrix[Char]): List[String] = {
   List(Down, Right, DownLeft, DownRight).flatMap { direction =>
-    puzzle.wordAt(row, col, direction, "XMAS".length)
+    puzzle.elementsAt(elem, direction, "XMAS".length).map(_.mkString)
   }
 }
 
-def isCrossXmas(row: Int, col: Int)(using puzzle: Puzzle): Boolean = {
-  def charAt(direction: Direction) = {
-    val (r, c) = direction.step(row, col)
-    puzzle(r, c)
-  }
-
+def isCrossXmas(el: Elem[Char])(using puzzle: Matrix[Char]): Boolean = {
   (for {
-    center <- charAt(Center)
-    upLeft <- charAt(UpLeft)
-    upRight <- charAt(UpRight)
-    downLeft <- charAt(DownLeft)
-    downRight <- charAt(DownRight)
+    upLeft <- puzzle.nextElem(el, UpLeft)
+    upRight <- puzzle.nextElem(el, UpRight)
+    center = el
+    downLeft <- puzzle.nextElem(el, DownLeft)
+    downRight <- puzzle.nextElem(el, DownRight)
   } yield {
     isMas(Array(upLeft, center, downRight).mkString) && isMas(Array(downLeft, center, upRight).mkString)
   }).getOrElse(false)
-}
-
-case class Puzzle(input: Array[Array[Char]]) {
-  val rowIndices: List[Int] = input.indices.toList
-  val colIndices: List[Int] = input.head.indices.toList
-
-  def apply(row: Int, col: Int): Option[Char] = {
-    input.lift(row).flatMap(_.lift(col))
-  }
-
-  def wordAt(fromRow: Int, fromCol: Int, direction: Direction, length: Int): Option[String] = {
-    val (word, _, _, _) = foldWhile(Option(List.empty[Char]), fromRow, fromCol, length) {
-      case (Some(res), row, col, remaining) if remaining > 0 =>
-        val (nextRow, nextCol) = direction.step(row, col)
-        (apply(row, col).map(res.appended), nextRow, nextCol, remaining - 1)
-    }
-    word.map(_.mkString)
-  }
-}
-
-enum Direction(val step: (Int, Int) => (Int, Int)) {
-  case Center extends Direction((r, c) => (r, c))
-  case Down extends Direction((r, c) => (r + 1, c))
-  case Right extends Direction((r, c) => (r, c + 1))
-  case DownLeft extends Direction((r, c) => (r + 1, c - 1))
-  case DownRight extends Direction((r, c) => (r + 1, c + 1))
-  case UpLeft extends Direction((r, c) => (r - 1, c - 1))
-  case UpRight extends Direction((r, c) => (r - 1, c + 1))
 }
 
 def isXmas(s: String): Boolean = {
