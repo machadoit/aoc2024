@@ -8,6 +8,12 @@ class Matrix[A](elements: Array[Array[Elem[A]]]) extends Iterable[Elem[A]] with 
     elements.lift(row).flatMap(_.lift(col))
   }
 
+  def update(row: Int, col: Int, value: A): Elem[A] = {
+    val newElem = Elem(value, row, col)
+    elements(row).update(col, newElem)
+    newElem
+  }
+
   override def iterator: Iterator[Elem[A]] = new scala.collection.AbstractIterator[Elem[A]] {
     private val _iterator: Iterator[Iterator[Elem[A]]] = elements.iterator.map(_.iterator)
 
@@ -31,6 +37,8 @@ class Matrix[A](elements: Array[Array[Elem[A]]]) extends Iterable[Elem[A]] with 
       _currentRow
     }
   }
+
+  override def toString(): String = elements.map(_.mkString).mkString("\n")
 }
 
 object Matrix {
@@ -59,6 +67,10 @@ object Matrix {
 
 trait MatrixOps[A] {
   self: Matrix[A] =>
+
+  def nextElem(row: Int, col: Int, direction: Direction): Option[Elem[A]] = {
+    self.elemAt.tupled(direction.step(row, col))
+  }
 
   def nextElem(el: Elem[A], direction: Direction): Option[Elem[A]] = {
     self.elemAt.tupled(direction.step(el.row, el.col))
