@@ -9,9 +9,9 @@ object Util {
     result
   }
 
-  def read[A: ClassTag](filename: String)(parse: String => A = identity): List[List[A]] = {
+  def read[A: ClassTag](filename: String, delim: String = """\s+""")(parse: String => A = identity): List[List[A]] = {
     readFile(filename)
-      .map(line => line.split("""\s+""").map(it => parse(it)).toList)
+      .map(line => line.split(delim).map(it => parse(it)).toList)
   }
 
   def foldWhile[B](z: B)(op: PartialFunction[B, B]): B = {
