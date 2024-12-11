@@ -48,6 +48,14 @@ object Matrix {
     )
   }
 
+  def apply[A](source: List[List[A]]): Matrix[A] = {
+    new Matrix(
+      source.zipWithIndex
+        .map((rowValues, row) => rowValues.zipWithIndex.map((value, col) => Elem[A](value, row, col)).toArray)
+        .toArray
+    )
+  }
+
   case class Elem[A](value: A, row: Int, col: Int) {
     override def toString: String = value.toString
     def info: String = s"$value ($row, $col)"
