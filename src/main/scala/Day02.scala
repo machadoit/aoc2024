@@ -52,7 +52,7 @@ def computeState(current: Int, rest: List[Int], state: State): State = {
 }
 
 def recoverReport(fullReport: Seq[Int]): Boolean = {
-  subReports(fullReport).foldWhile(false) {
+  subReports(fullReport).foldLWhile(false) {
     case (state, report) if !state =>
       safeReport(report)
   }

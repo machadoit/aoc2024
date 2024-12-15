@@ -23,9 +23,9 @@ object Util {
   }
 
   extension [A](iterable: IterableOnce[A]) {
-    def foldWhile[B](z: B)(op: PartialFunction[(B, A), B]): B = {
+    def foldLWhile[B](z: B)(op: PartialFunction[(B, A), B]): B = {
       scala.util.boundary {
-        iterable.foldLeft(z) { case b @ (acc, _) =>
+        iterable.iterator.foldLeft(z) { case b @ (acc, _) =>
           if (op.isDefinedAt(b)) op(b) else scala.util.boundary.break(acc)
         }
       }
