@@ -1,14 +1,12 @@
-import Util.read
-
-import scala.annotation.tailrec
+import Util.*
 
 @main def day11(): Unit = {
 
-  val input: List[String] = read("resources/day11")().head
+  val input: List[BigInt] = read("resources/day11")(BigInt.apply).head
 
   // Part 1
 
-  val result1 = blink(input, 25).length
+  val result1 = Tree(input, 25).solve()
 
   println(result1)
 
@@ -19,23 +17,29 @@ import scala.annotation.tailrec
   println(result2)
 }
 
-@tailrec
-def blink(stones: List[String], n: Int): List[String] = {
-  if (n > 0) {
-    blink(stones.flatMap(stone => blinkStone(stone)), n - 1)
-  } else {
-    stones
-  }
-}
+class Tree(roots: List[BigInt], totalBlinks: Int) {
+  var total: BigInt = 0
 
-def blinkStone(stone: String): List[String] = {
-  stone match {
-    case "0" =>
-      List("1")
-    case stone if stone.length % 2 == 0 =>
-      val (left, right) = stone.splitAt(stone.length / 2)
-      List(left.toInt.toString, right.toInt.toString)
-    case stone =>
-      List((stone.toLong * 2024).toString)
+  def solve(): BigInt = {
+    foldWhile(roots.map((_, totalBlinks))) {
+      case (stone, 1) :: rest =>
+        total += blinkStone(stone).length
+        rest
+      case (stone, blinks) :: rest =>
+        blinkStone(stone).map((_, blinks - 1)) ::: rest
+    }
+    total
+  }
+
+  private def blinkStone(stone: BigInt): List[BigInt] = {
+    stone.toString match {
+      case "0" =>
+        List(BigInt(1))
+      case str if str.length % 2 == 0 =>
+        val (left, right) = str.splitAt(str.length / 2)
+        List(BigInt(left), BigInt(right))
+      case _ =>
+        List(stone * 2024)
+    }
   }
 }
